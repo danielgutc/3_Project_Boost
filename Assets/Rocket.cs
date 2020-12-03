@@ -8,11 +8,13 @@ public class Rocket : MonoBehaviour
     private AudioSource audioSource;
 
     [SerializeField] 
-    private float rcsThrust = 100f;
+    private float rcsThrust = 50f;
     [SerializeField] 
-    private float mainThrust = 100f;
+    private float mainThrust = 50f;
     [SerializeField] 
-    private AudioClip mainEngine;
+    private AudioClip mainEngineSound;
+    [SerializeField] 
+    private ParticleSystem mainEngineParticles;
 
     // Start is called before the first frame update
     void Start()
@@ -24,38 +26,69 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        ProcessInput();
+        Thrust();
+        Rotate();
     }
 
-    void ProcessInput()
-    {
 
+    #region Rocket
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        switch (collision.gameObject.tag)
+        {
+            case "Friendly":
+                // do nothing
+                break;
+            case "Finish":
+                //StartSuccessSequence();
+                break;
+            default:
+                //StartDeathSequence();
+                break;
+        }
+    }
+
+    private void Thrust()
+    {
         if (Input.GetKey(KeyCode.UpArrow))
         {
             rigidBody.AddRelativeForce(Vector3.up * mainThrust * Time.deltaTime);
+            mainEngineParticles.Play();
 
             if (!audioSource.isPlaying)
             {
-                print("start to play");
-                audioSource.PlayOneShot(mainEngine);
-            }
-            else
-            {
-                print("already playing sound");
+                audioSource.PlayOneShot(mainEngineSound);
             }
         }
         else
         {
-            audioSource.Stop(); 
+            audioSource.Stop();
+            mainEngineParticles.Stop();
         }
+    }
 
+    private void Rotate()
+    {
         if (Input.GetKey(KeyCode.LeftArrow))
         {
-            transform.Rotate(Vector3.forward);
+            ManualRotate(rcsThrust * Time.deltaTime);
         }
         else if (Input.GetKey(KeyCode.RightArrow))
         {
-            transform.Rotate(-Vector3.forward);
+            ManualRotate(-rcsThrust * Time.deltaTime);
         }
     }
+
+    private void ManualRotate(float rotationThisFrame)
+    {
+        rigidBody.freezeRotation = true;
+        transform.Rotate(Vector3.forward * rotationThisFrame);
+        rigidBody.freezeRotation = false;
+    }
+    #endregion
+
+    #region Levels
+
+    #endregion
 }
